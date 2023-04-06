@@ -11,7 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  
+  
+ 
 )
+find_package(ur_rtde REQUIRED)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -103,11 +108,15 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES article_ur
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+ INCLUDE_DIRS include
+ LIBRARIES article_ur
+ CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
+
+
+
+
 
 ###########
 ## Build ##
@@ -119,9 +128,16 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
+
 catkin_install_python(PROGRAMS script/demo_pub.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+
+add_executable(demo_filters src/demo_filters.cpp)
+target_link_libraries(demo_filters  PRIVATE ur_rtde::rtde)
+
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/article_ur.cpp

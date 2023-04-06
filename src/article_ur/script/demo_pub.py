@@ -1,80 +1,55 @@
 ##代码的主要功能是力信息采集及信号滤波处理，最好添加重力补偿部分的力曲线。
 import rospy
-from rtde_receive import RTDEReceiveInterface as RTDEReceive
+import rtde_receive
+import rtde_control
 import time
 import argparse
 import sys
-eljkgqwjk
-
-def parse_args(args):
-    """Parse command line parameters
-
-    Args:
-      args ([str]): command line parameters as list of strings
-
-    Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
-    """
-    parser = argparse.ArgumentParser(
-        description="Record data example")
-    parser.add_argument(
-        "-ip",
-        "--robot_ip",
-        dest="ip",
-        help="IP address of the UR robot",
-        type=str,
-        default='localhost',
-        metavar="<IP address of the UR robot>")
-    parser.add_argument(
-        "-o",
-        "--output",
-        dest="output",
-        help="data output (.csv) file to write to (default is \"robot_data.csv\"",
-        type=str,
-        default="robot_data.csv",
-        metavar="<data output file>")
-    parser.add_argument(
-        "-f",
-        "--frequency",
-        dest="frequency",
-        help="the frequency at which the data is recorded (default is 500Hz)",
-        type=float,
-        default=500.0,
-        metavar="<frequency>")
-
-    return parser.parse_args(args)
+import csv
+from std_msgs.msg import Float64MultiArray
+rtde_r = rtde_receive.RTDEReceiveInterface("192.168.3.101")
+rtde_c=rtde_control.RTDEControlInterface("192.168.3.101")
+Read_flag=True
 
 
-def main(args):
-    """Main entry point allowing external calls
 
-    Args:
-      args ([str]): command line parameter list
-    """
-    args = parse_args(args)
-    dt = 1 / args.frequency
-    rtde_r = RTDEReceive(args.ip, args.frequency)
-    rtde_r.startFileRecording(args.output)
-    print("Data recording started, press [Ctrl-C] to end recording.")
-    i = 0
+i = 0
+dt=0.05
+# try:
+#     while Read_flag:
+#         start = time.time()
+#         force_data=rtde_r.getActualTCPForce()
+#         with open("force_static.csv","a",newline='') as g:
+#                     writer1 = csv.writer(g)
+#                     writer1.writerow(force_data)
+#         end = time.time()
+#         duration = end - start
+
+#         if duration < dt:
+#             time.sleep(dt - duration)
+#         i += 1
+# except KeyboardInterrupt:
+#     print(i)
+#     Read_flag=False
+#     print("\nData recording stopped.")
+
+def talker():
+    pub = rospy.Publisher('force', Float64MultiArray, queue_size=1)
+    rospy.init_node('talker', anonymous=True)
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        force_data=Float64MultiArray()
+        # rtde_c.zeroFtSensor()
+        force_data.data=rtde_r.getActualTCPForce()
+        print(force_data.data)
+        pub.publish(force_data)
+        rate.sleep()
+if __name__ == '__main__':
+    # rtde_c.zeroFtSensor()
     try:
-        while True:
-            start = time.time()
-            if i % 10 == 0:
-                sys.stdout.write("\r")
-                sys.stdout.write("{:3d} samples.".format(i))
-                sys.stdout.flush()
-            end = time.time()
-            duration = end - start
-
-            if duration < dt:
-                time.sleep(dt - duration)
-            i += 1
-
-    except KeyboardInterrupt:
-        rtde_r.stopFileRecording()
-        print("\nData recording stopped.")
+        talker()
+    # except KeyboardInterrupt:
+    except rospy.ROSInterruptException:
+        pass
 
 
-if __name__ == "__main__":
-    main(sys.argv[1:])
