@@ -71,10 +71,9 @@ def talker():
         pub_seg.publish(sig_force)
         rate.sleep()
 if __name__ == '__main__':
-    # rtde_c.zeroFtSensor()
+    
     try:
         talker()
-    # except KeyboardInterrupt:
     except rospy.ROSInterruptException:
         pass
 
